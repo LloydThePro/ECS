@@ -1,5 +1,5 @@
-#include "EntityCreator.h"
-
+#include "../include/EntityCreator.h"
+#include "../include/ErrorHandling.h"
 EntityCreator::EntityCreator()
 {
     //ctor
@@ -7,7 +7,11 @@ EntityCreator::EntityCreator()
 
 EntityObj EntityCreator::createEntity(EntityID entID){
 
-    if(!EntityManager::isEntityValid(entID))return EntityObj(); // need some proper error handling here
+    if (!EntityManager::isEntityValid(entID)) {
+
+        ECS::ErrorHandling::logError("Invalid Entity", "EntityCreator", "EntityCreator::createEntity", 8);
+        return EntityObj(); 
+    }
 
     for(Entity& e : EntityManager::registeredEnt){
 
@@ -28,6 +32,8 @@ EntityObj EntityCreator::createEntity(EntityID entID){
 
     }
 
+    ECS::ErrorHandling::logError("Entity was not found", "EntityCreator", "EntityCreator::createEntity", 35);
+    return EntityObj();
 }
 
 void * EntityCreator::getComponent(const EntityObj& entObj, ComponentID comID){
@@ -39,8 +45,9 @@ void * EntityCreator::getComponent(const EntityObj& entObj, ComponentID comID){
             return ComponentManager::queryComponentMemory(comID);
         }
     }
-
-   return nullptr;
+   
+    ECS::ErrorHandling::logError("Component was not found", "EntityCreator", "EntityCreator::getComponent", 49);
+    return nullptr;
 
 }
 

@@ -11,7 +11,7 @@ class ComponentManager{
 
 public:
 
-    static int registerComp(uint32_t compSize);
+    static ComponentID registerComp(uint32_t compSize);
     static void * queryComponentMemory(ComponentID comID);
     static bool isComponentValid(ComponentID id);
     static unsigned int allocMem(ComponentID id);

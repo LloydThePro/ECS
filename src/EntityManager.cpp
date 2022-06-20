@@ -1,4 +1,5 @@
-#include "EntityManager.h"
+#include "../include/EntityManager.h"
+#include "../include/ErrorHandling.h"
 EntityID EntityManager::ids = 0;
 std::vector<Entity> EntityManager::registeredEnt;
 EntityManager::EntityManager()
@@ -22,6 +23,7 @@ void EntityManager::BindComponentToEnt(EntityID entID, ComponentID compID){
 
     if(!isValid){
         // do some error handling here probably use some throws
+        ECS::ErrorHandling::logError("Invalid Entity or Component ID", "EntityManager", "EntityManager::BindComponentToEnt", 24);
         return;
     }
 
