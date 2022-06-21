@@ -3,18 +3,21 @@
 #include <iostream>
 #include <vector>
 #include "Types.h"
-#include "EntityCreator.h"
-
+#include "ErrorHandling.h"
 
 
 class ComponentManager{
 
 public:
 
-    static int registerComp(uint32_t compSize);
-    static void * queryComponentMemory(ComponentID comID);
+    static ComponentID registerComp(uint32_t compSize);
+    static void * queryComponentMemory(MemOwnership memOwn);
     static bool isComponentValid(ComponentID id);
-    static unsigned int allocMem(ComponentID id);
+    static OwnershipID allocMem(ComponentID id);
+    
+
+
+
 private:
     static ComponentID ids;
     static std::vector<Component> registeredComp;
@@ -23,4 +26,7 @@ private:
 
 };
 
+
+
 #endif // COMPONENTMANAGER_H
+
