@@ -1,38 +1,131 @@
 #include <iostream>
-#include "include/ComponentManager.h"
-#include "include/EntityManager.h"
+#include "../becs.h"
 
 
-typedef struct{
-    int x, y;
-}Pos;
+typedef struct Pos {
+	int x, y;
+};
+typedef struct Health {
+	int currentHealth;
+	int maxHealth;
+};
+typedef struct Vel {
+	int x, y;
+};
 
-typedef struct{
-    float x, y;
-}PosF;
+typedef struct PlayerTag {
+	bool isPlayer = true;
+};
 
-
-static  ComponentID posID = ComponentManager::registerComp(sizeof(Pos));
-static  ComponentID posFID = ComponentManager::registerComp(sizeof(PosF));
-static EntityID Person = EntityManager::registerEntity();
-static EntityID People = EntityManager::registerEntity();
-
-int main(){
-
-
-    EntityManager::BindComponentToEnt(Person, posID);
-
-
-
-    EntityObj someGuy = EntityCreator::createEntity(Person);
-
-    Pos * myPosPtr = reinterpret_cast<Pos *>(EntityCreator::getComponent(someGuy, posID));
-
-    myPosPtr->x = 5;
-    myPosPtr->y = 5;
+typedef struct MerchantTag {
+	bool isMerchant = true;
+};
 
 
+void physics(BECS * ecs, ComponentID posID, ComponentID velID) {
+	int posSize, velSize;
+	QueryComponent posQuery = ecs->getComponent(posID);
+	QueryComponent velQuery = ecs->getComponent(velID);
+	
+
+	std::cout << "Positons: ComponentID: " << posQuery.m_ID << '\n';
+	for (int i = 0; i < posQuery.m_arryCount; i++) {
+
+		MemCell* pos = &posQuery.m_compArry[i];
+		Pos* posPtr = reinterpret_cast<Pos*>(pos->m_comp);
+		
+		std::cout << "EntityID: " << pos->m_entOwner << " X: " << posPtr->x << " Y: " << posPtr->y << '\n';
+
+	}
+	std::cout << "Velocity: ComponentID: " << velQuery.m_ID << '\n';
+	for (int i = 0; i < velQuery.m_arryCount; i++) {
+
+		MemCell* vel = &velQuery.m_compArry[i];
+
+		Vel* velPtr = reinterpret_cast<Vel*>(vel->m_comp);
+
+		std::cout << "EntityID: " << vel->m_entOwner << " X: " << velPtr->x << " Y: " << velPtr->y << '\n';
+	}
 
 
-    return 0;
+}
+
+void initPhyiscs(BECS* ecs, ComponentID posID, ComponentID velID) {
+	int posSize, velSize;
+	QueryComponent posQuery = ecs->getComponent(posID);
+	QueryComponent velQuery = ecs->getComponent(velID);
+
+	
+
+	for (int i = 0; i < posQuery.m_arryCount; i++) {
+
+		MemCell* pos = &posQuery.m_compArry[i];
+		Pos* posPtr = reinterpret_cast<Pos*>(pos->m_comp);
+		posPtr->x = 2;
+		posPtr->y = 3;
+		
+	}
+	for (int i = 0; i < velQuery.m_arryCount; i++) {
+
+		MemCell* vel = &velQuery.m_compArry[i];
+
+		Vel* velPtr = reinterpret_cast<Vel*>(vel->m_comp);
+
+		velPtr->x = 1;
+		velPtr->y = 0;
+	}
+
+}
+
+
+void displayComponentBind(BECS* ecs, EntityID id, const char* name) {
+	unsigned int size;
+	ComponentID* arry = ecs->getComponentBinded(id, &size);
+	std::cout << "Entity Name: " << name << " Entity ID: " << id << '\n';
+	std::cout << "ComponentID: ";
+	for (int i = 0; i < size; i++) {
+		std::cout << " " << arry[i];
+	}
+	std::cout << '\n';
+}
+
+
+int main() {
+
+	BECS ecs;
+	ComponentID PosID = ecs.registerComponent(sizeof(Pos));
+	ComponentID HealthID = ecs.registerComponent(sizeof(Health));
+	ComponentID VelID = ecs.registerComponent(sizeof(Vel));
+	ComponentID PlayerTagID = ecs.registerComponent(sizeof(PlayerTag));
+	ComponentID MerchantTagID = ecs.registerComponent(sizeof(MerchantTag));
+
+	EntityID person = ecs.createEntity();
+	EntityID rock = ecs.createEntity();
+	EntityID merchant = ecs.createEntity();
+
+	
+
+
+	ecs.addComponent(person, PosID);
+	ecs.addComponent(person, HealthID);
+	ecs.addComponent(person, VelID);
+	ecs.addComponent(person, PlayerTagID);
+
+
+	ecs.addComponent(rock, PosID);
+	ecs.addComponent(rock, VelID);
+
+	ecs.addComponent(merchant, PosID);
+	ecs.addComponent(merchant, HealthID);
+	ecs.addComponent(merchant, MerchantTagID);
+	
+	displayComponentBind(&ecs, person, "Person");
+	displayComponentBind(&ecs, rock, "Rock");
+	displayComponentBind(&ecs, merchant, "Merchant");
+
+	std::cout << "\n\n";
+	initPhyiscs(&ecs, PosID, VelID);
+	physics(&ecs, PosID, VelID);
+
+	return 0;
 }
