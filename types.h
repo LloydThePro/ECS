@@ -9,11 +9,13 @@ typedef unsigned int MemoryIndex;
 typedef struct MemCell{
 	EntityID		m_entOwner;	// reference to the entity
 	void*			m_comp;		// component data
+	bool isValid;
 };
 
 typedef struct FreeMem {
 	ComponentID		id;
 	MemoryIndex		index;
+	MemoryIndex		compMemIndex;
 };
 
 typedef struct CompMemIndex {
@@ -33,6 +35,8 @@ typedef struct Entity {
 	std::vector<ComponentID>	m_bindedComp;	// the component bound to this entity
 	EntityID					m_ID;			// the entity id
 };
+
+
 
 typedef struct QueryComponent {
 	MemCell*			m_compArry;
