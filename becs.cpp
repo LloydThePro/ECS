@@ -4,10 +4,9 @@ ComponentID BECS::registerComponent(unsigned int size) {
 
 	m_registeredComp.push_back(m_compIDCounter);
 	CompMemCell cell;
-	
-	//m_freeCompMemory.push_back(std::move(std::vector<FreeMem>()));
 	cell.m_compSize = size;
 	m_compMemory.push_back(std::move(cell));
+	m_freeCompMemory.push_back(std::move(std::queue<FreeMem>()));
 	ComponentID id = m_compIDCounter;
 	m_compIDCounter++;
 	return id;
@@ -18,9 +17,9 @@ ComponentID* BECS::getComponentBinded(EntityID entID, unsigned int * size)
 	if (!(entID < m_entIDCounter))return nullptr;
 	
 	// check if this entity is deleted
-	for (EntityID id : m_freeEntity) {
-		if (id == entID)return nullptr;
-	}
+	auto isValid = m_entity.find(entID);
+	if (isValid == m_entity.end())return nullptr;
+
 	*size = m_entity[entID].m_bindedComp.size();
 	
 	return m_entity[entID].m_bindedComp.data();
@@ -30,21 +29,28 @@ ComponentID* BECS::getComponentBinded(EntityID entID, unsigned int * size)
 void BECS::addComponent(EntityID entID, ComponentID compID) {
 	if (!(entID < m_entIDCounter))return;
 	if (!(compID < m_compIDCounter))return;
-	// need to check if in free space
+	
 	
 	// check if this entity is deleted
-	for (EntityID id : m_freeEntity) {
-		if (id == entID)return;
-	}
+	auto isValid = m_entity.find(entID);
+	if (isValid == m_entity.end())return;
 	
 	// check if the componennt is already bound to the entity
 	for (ComponentID& c : m_entity[entID].m_bindedComp) {
 		if (c == compID)return;
 	}
 
-	if (!m_freeCompMemory.empty()) {
-
-		for (FreeMem mem : m_freeCompMemory) {
+	if (!m_freeCompMemory[compID].empty()) {
+		CompMemIndex temp;
+		m_entity[entID].m_bindedComp.push_back(compID);
+		FreeMem mem = m_freeCompMemory[compID].front();
+		m_freeCompMemory[compID].pop();
+		temp.id = mem.id;
+		temp.index = mem.index;
+		m_entity[entID].m_memIndex.insert(std::make_pair(compID, temp));
+		m_compMemory[compID].m_components[mem.compMemIndex].isValid = true;
+		return;
+		/*for (FreeMem mem : m_freeCompMemory) {
 			if (mem.id == compID) {
 
 				m_entity[entID].m_bindedComp.push_back(compID);
@@ -52,12 +58,10 @@ void BECS::addComponent(EntityID entID, ComponentID compID) {
 				temp.id = mem.id;
 				temp.index = mem.index;
 				
-				m_entity[entID].m_memIndex.push_back(temp);
-				m_compMemory[compID].m_components[mem.compMemIndex].isValid = true;
 				return;
 			}
 
-		}
+		}*/
 
 
 	}
@@ -76,7 +80,7 @@ void BECS::addComponent(EntityID entID, ComponentID compID) {
 
 	index.index = m_compMemory[compID].m_components.size() - 1;
 	index.id = compID;
-	m_entity[entID].m_memIndex.push_back(index);
+	m_entity[entID].m_memIndex.insert(std::make_pair(compID, index));
 
 }
 
@@ -86,20 +90,18 @@ void BECS::removeComponent(EntityID entID, ComponentID compID){
 	if (!(compID < m_compIDCounter))return;
 	// need to check if in free space
 
-	// check if this entity is deleted
-	for (EntityID id : m_freeEntity) {
-		if (id == entID)return;
-	}
+	auto isValid = m_entity.find(entID);
+	if (isValid == m_entity.end())return;
 
-	
-	bool isCompontBound = true;
+	int index = 0;
+	bool isCompontBound = false;
 	for (ComponentID& c : m_entity[entID].m_bindedComp) {
 		
 		if (c == compID) {
 			isCompontBound = true;
 			break;
 		}
-		
+		index++;
 	}
 
 	if (!isCompontBound)return;
@@ -107,8 +109,8 @@ void BECS::removeComponent(EntityID entID, ComponentID compID){
 
 	if (m_entity[entID].m_bindedComp.empty())return;
 	
-	int index = 0;
-	bool isFound = false;
+	
+	/*bool isFound = false;
 	for (ComponentID& id : m_entity[entID].m_bindedComp) {
 		
 		if (id == compID) {
@@ -116,26 +118,30 @@ void BECS::removeComponent(EntityID entID, ComponentID compID){
 			break;
 		}
 		index++;
-	}
+	}*/
 
 	FreeMem mem;
 	mem.id = compID;
-	mem.index = 0;
+	mem.index = 0;	// index to the memory indexes of an entity
 	
 	
-	for (CompMemIndex& c : m_entity[entID].m_memIndex) {
+	/*for (CompMemIndex& c : m_entity[entID].m_memIndex) {
 		if (c.id == compID) {
 			mem.compMemIndex = c.index;
 			break;
 		}
 		mem.index++;
-	}
+	}*/
+
+	mem.compMemIndex = m_entity[entID].m_memIndex[compID].index;
+
 	m_compMemory[compID].m_components[mem.compMemIndex].isValid = false;
-	m_entity[entID].m_memIndex.erase(m_entity[entID].m_memIndex.begin() + mem.index);
+	//m_entity[entID].m_memIndex.erase(m_entity[entID].m_memIndex.begin() + mem.index);
+	m_entity[entID].m_memIndex.erase(compID);
 	
 	
-	
-	m_freeCompMemory.push_back(std::move(mem));
+	//m_freeCompMemory.insert(std::make_pair(compID, std::move(mem)));
+	m_freeCompMemory[compID].push(std::move(mem));
 
 	m_entity[entID].m_bindedComp.erase(m_entity[entID].m_bindedComp.begin() + index);
 
@@ -145,17 +151,25 @@ void BECS::destroyEntity(EntityID entID){
 	if (!(entID < m_entIDCounter))return;
 	
 	// check if this entity is deleted
-	for (EntityID id : m_freeEntity) {
-		if (id == entID)return;
-	}
-	int count = m_entity[entID].m_bindedComp.size();
+	auto isValid = m_entity.find(entID);
 
-	for (int i = 0; i < count; i++) {
-		removeComponent(entID, m_entity[entID].m_bindedComp[i]);
+	if (isValid == m_entity.end())return;
+
+
+	
+	auto& entRef = m_entity[entID].m_bindedComp;
+	
+	for (auto comp : entRef) {
+		removeComponent(entID, comp);
 	}
+
+	
+
+
 	m_entity[entID].m_bindedComp.clear();
 	m_entity[entID].m_memIndex.clear();
-	m_freeEntity.push_back(entID);
+	m_entity.erase(entID);
+	m_freeEntity.push(entID);
 }
 
 EntityID BECS::createEntity()
@@ -164,7 +178,7 @@ EntityID BECS::createEntity()
 	if (!m_freeEntity.empty()) {
 
 		EntityID id = m_freeEntity.front();
-		m_freeEntity.erase(m_freeEntity.begin());
+		m_freeEntity.pop();
 		return id;
 	}
 
@@ -172,7 +186,8 @@ EntityID BECS::createEntity()
 	m_entIDCounter++;
 	Entity ent;
 	ent.m_ID = id;
-	m_entity.push_back(std::move(ent));
+	m_entity.insert(std::make_pair(id, std::move(ent)));
+
 	return id;
 }
 
@@ -199,6 +214,5 @@ BECS::~BECS() {
 	m_registeredComp.clear();
 	m_compMemory.clear();
 	m_freeCompMemory.clear();
-	m_freeEntity.clear();
 	m_entity.clear();
 }

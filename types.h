@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-
+#include <unordered_map>
 typedef unsigned int EntityID;
 typedef unsigned int ComponentID;
 typedef unsigned int MemoryIndex;
@@ -14,7 +14,7 @@ typedef struct MemCell{
 
 typedef struct FreeMem {
 	ComponentID		id;
-	MemoryIndex		index;
+	MemoryIndex		index;			// index to the memory indexes of an entity
 	MemoryIndex		compMemIndex;
 };
 
@@ -31,7 +31,7 @@ typedef struct CompMemCell{
 };
 
 typedef struct Entity {
-	std::vector<CompMemIndex>	m_memIndex;		// the index/reference to memory locations
+	std::unordered_map<ComponentID, CompMemIndex>	m_memIndex;		// the index/reference to memory locations
 	std::vector<ComponentID>	m_bindedComp;	// the component bound to this entity
 	EntityID					m_ID;			// the entity id
 };
@@ -39,7 +39,7 @@ typedef struct Entity {
 
 
 typedef struct QueryComponent {
-	MemCell*			m_compArry;
+	MemCell*		m_compArry;
 	unsigned int	m_arryCount;
 	unsigned int	m_compSize;
 	ComponentID		m_ID;

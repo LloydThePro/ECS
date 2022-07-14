@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include <queue>
 /*
 *	 
 *	MIT License
@@ -45,8 +46,8 @@ private:
 	ComponentID								m_compIDCounter;
 	std::vector<ComponentID>				m_registeredComp;
 	std::vector<CompMemCell>				m_compMemory;
-	std::vector<FreeMem>					m_freeCompMemory;
-	std::vector<Entity>						m_entity;
-	std::vector<EntityID>					m_freeEntity;
+	std::vector<std::queue<FreeMem>>		m_freeCompMemory;
+	std::unordered_map<EntityID, Entity>	m_entity;
+	std::queue<EntityID>					m_freeEntity;
 };
 
