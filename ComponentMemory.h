@@ -27,7 +27,7 @@ namespace becs {
 		void push_back(void* raw);
 		size_t getComponentSize();
 		size_t getComponentCount();
-
+		size_t getAllocatedMemory();
 
 
 	private:

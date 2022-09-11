@@ -4,9 +4,27 @@ using namespace becs;
 
 FilterID becs::ComponentFilterManager::createFilter()
 {
+    if (!m_deletedFilters.empty()) {
+
+        FilterID id = m_deletedFilters.front();
+        m_deletedFilters.pop();
+        return id;
+    }
+
     m_filters.push_back(becs::Filter());
 
     return m_filters.size() - 1;
+}
+
+void becs::ComponentFilterManager::destroyFilter(FilterID fID) {
+    
+    if (fID >= m_filters.size())return; // not valid iD
+
+    m_filters[fID].components.clear();
+    m_filters[fID].entities.clear();
+
+    m_deletedFilters.push(fID);
+
 }
 
 void becs::ComponentFilterManager::addComponent(FilterID id, ComponentID compID) {
@@ -77,5 +95,40 @@ void becs::ComponentFilterManager::copyFilter(FilterID to, FilterID from) {
 }
 
 void becs::ComponentFilterManager::addEntToFilter(FilterID id, EntityID entID) {
+    
     m_filters[id].entities.push_back(entID);
+
+}
+
+void becs::ComponentFilterManager::removeEntity(FilterID id, EntityID entID) {
+    
+    uint32_t idx = 0;
+    bool exist = false;
+    for (const auto& e : m_filters[id].entities) {
+
+        if (e == entID) {
+            exist = true;
+            break;
+        }
+        idx++;
+    }
+
+    if(exist)
+        m_filters[id].entities.erase(m_filters[id].entities.begin() + idx);
+
+
+
+}
+
+void becs::ComponentFilterManager::removeEntity(EntityID entID) {
+    FilterID id = 0;
+    for (const auto& f : m_filters) {
+
+        for (const auto& e : f.entities) {
+            if (entID == e) {
+                removeEntity(id, e);
+            }
+        }
+        id++;
+    }
 }

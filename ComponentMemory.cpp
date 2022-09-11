@@ -76,6 +76,10 @@ size_t ComponentMemory::getComponentCount()
     return m_count;
 }
 
+size_t becs::ComponentMemory::getAllocatedMemory() {
+    return m_capacity * m_compSize;
+}
+
 void ComponentMemory::resize() {
     
     m_capacity += 5;

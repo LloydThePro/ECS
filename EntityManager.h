@@ -2,14 +2,19 @@
 #include "Types.h"
 #include <queue>
 class EntityManager {
-
+	
 public:
 
-	becs::EntityID registerEntity();
+	becs::EntityID registerEntity(bool* isThisRealloc);
 	bool doesExist(becs::EntityID entID);
+	void bindComponentToEnt(becs::EntityID entID, becs::ComponentID compID);
+	void unbindAllComponents(becs::EntityID entID);
 	void unregisterEntity(becs::EntityID entID);
 	size_t getEntityCapacity();
 	size_t getEntityCount();
+
+	const std::vector<becs::ComponentID>& getComponentBounded(becs::EntityID entID);
+	
 private:
 	
 	becs::EntityID m_counter = 0;

@@ -1,11 +1,7 @@
 #pragma once
 
-#ifdef _DEBUG_MODE_ENABLED
-#define _ENABLE_DEBUG
-#endif
 
 
-#define _ENABLE_DEBUG
 #include "MemoryManager.h"
 #include "EntityManager.h"
 #include "ComponentManager.h"
@@ -29,14 +25,15 @@ namespace becs{
 		FilterID createFilter();
 		void addComponentToFilter(FilterID id, ComponentID compID);
 		void addEntToFilter(FilterID id, EntityID entID);
+		void removeEntityToFilter(FilterID id, EntityID entID);
+		void removeEntityToFilter(EntityID entID);
+		void destroyFilter(FilterID fID);
 		void updateFilterContent();
-		size_t getComponentsByFilter(FilterID id, QueryComponent* queryArry, size_t count);
-
-#ifdef _ENABLE_DEBUG
-		void debug();
-#endif // _ENABLE_DEBUG
-
-
+		size_t getComponentsByFilter(FilterID id, QueryData* queryArry, size_t count);
+		bool getSingleComponentByFilter(FilterID id, SingleQueryData* query, QueryIteration iter);
+		size_t getCompMemSize(ComponentID compID);
+		size_t getEntityCount();
+		size_t getEntityCapacity();
 
 
 	private:

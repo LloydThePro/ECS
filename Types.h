@@ -22,6 +22,17 @@ namespace becs {
 	typedef struct {
 		void* component;
 		ComponentID compID;
-	}QueryComponent;
+	}QueryData;
 
+
+	typedef struct {
+		void* component;
+		ComponentID compID;
+		uint32_t entIdx;
+		uint32_t compIdx;
+	}SingleQueryData;
+
+	enum class QueryIteration{
+		NEXT_COMP, PREV_COMP, NEXT_ENT, PREV_ENT, LAST_ENT, LAST_COMP, FIRST_COMP, FIRST_ENT
+	};
 }

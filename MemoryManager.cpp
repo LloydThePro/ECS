@@ -9,10 +9,16 @@ void MemoryManager::initEntityMemory() {
 
 void MemoryManager::initComponentMemory(size_t compSize) {
 	m_componentMemory.push_back(std::move(becs::ComponentMemory(compSize)));
-	
+	m_freeMemory.push_back(std::queue<uint32_t>());
 }
 
 void MemoryManager::addComponentInstance(becs::ComponentID compID, EntityID entID) {
+
+	if (!m_freeMemory[compID].empty()) {
+		m_indexTable[entID].insert(std::make_pair(compID, m_freeMemory[compID].front()));
+		m_freeMemory[compID].pop();
+		return;
+	}
 
 	m_componentMemory[compID].push_back(nullptr);
 	m_indexTable[entID].insert(std::make_pair(compID, m_componentMemory[compID].getComponentCount() - 1));
@@ -21,8 +27,6 @@ void MemoryManager::addComponentInstance(becs::ComponentID compID, EntityID entI
 unsigned char* becs::MemoryManager::getComponent(EntityID entID, ComponentID compID) {
 
 	if (m_indexTable[entID].find(compID) == m_indexTable[entID].end()) {
-
-		
 		return nullptr;
 	}
 	uint32_t index = m_indexTable[entID].at(compID);
@@ -39,21 +43,19 @@ bool becs::MemoryManager::hasComponent(EntityID entID, ComponentID compID) {
 	return true;
 }
 
+void becs::MemoryManager::freeAllCompMemFromEnt(EntityID entID, const std::vector<ComponentID>& compIDs) {
 
-#define _ENABLE_DEBUG
+	for (const auto& compID : compIDs) {
 
-#ifdef  _ENABLE_DEBUG
-#include <iostream>
-void becs::MemoryManager::debug() {
-
-	for (auto& c : m_componentMemory) {
-		std::cout << "Component Count: " << c.getComponentCount() << " Component Size: " << c.getComponentSize() << '\n';
-		for (size_t i = 0; i < c.getComponentCount(); i++) {
-			std::cout << (int*)c.get(i) << ' ';
+		if (hasComponent(entID, compID)) {
+			m_freeMemory[compID].push(m_indexTable[entID].at(compID));
+			m_indexTable[entID].erase(compID);
 		}
-		std::cout << '\n';
 	}
 
-
+	
 }
-#endif //  _ENABLE_DEBUG
+
+size_t becs::MemoryManager::getCompMemoryAllocSize(ComponentID compID) {
+	return m_componentMemory[compID].getAllocatedMemory();
+}
